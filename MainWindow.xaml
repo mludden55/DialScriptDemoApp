@@ -1,0 +1,560 @@
+﻿<Window x:Class="ConnectIVRTester.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DialScript" Height="820" Width="1040"
+        MinHeight="680" MinWidth="900"
+        Icon="icon/app.ico"
+        PreviewMouseDown="Window_PreviewMouseDown">
+    <Window.Resources>
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+        <!-- Colored section "boxes" use Border, not GroupBox: a GroupBox with no Header
+             set still reserves a gap in its border for where a header would go, which
+             looks like a rendering glitch now that every section uses an external bold
+             caption instead of the native header. Border has no such concept, so no gap. -->
+        <Style TargetType="Border" x:Key="SectionBorder">
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderBrush" Value="#B0B0B0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="3"/>
+        </Style>
+        <!-- Environment: neutral gray - a control bar, not a workflow step -->
+        <Style x:Key="EnvironmentGroupBox" TargetType="Border" BasedOn="{StaticResource SectionBorder}">
+            <Setter Property="Background" Value="#E8E8E8"/>
+        </Style>
+        <!-- Phone Book: yellow (yellow pages, get it) -->
+        <Style x:Key="PhoneBookGroupBox" TargetType="Border" BasedOn="{StaticResource SectionBorder}">
+            <Setter Property="Background" Value="#FCE38A"/>
+        </Style>
+        <!-- Script Selector: blue -->
+        <Style x:Key="ScriptSelectorGroupBox" TargetType="Border" BasedOn="{StaticResource SectionBorder}">
+            <Setter Property="Background" Value="#A9CCE8"/>
+        </Style>
+        <!-- New Script (Call Target + Step Builder): green -->
+        <Style x:Key="NewScriptGroupBox" TargetType="Border" BasedOn="{StaticResource SectionBorder}">
+            <Setter Property="Background" Value="#A8DFAE"/>
+        </Style>
+        <!-- Create Batch: purple -->
+        <Style x:Key="CreateBatchGroupBox" TargetType="Border" BasedOn="{StaticResource SectionBorder}">
+            <Setter Property="Background" Value="#C9B6E4"/>
+        </Style>
+        <!-- Run Batch: orange -->
+        <Style x:Key="RunBatchGroupBox" TargetType="Border" BasedOn="{StaticResource SectionBorder}">
+            <Setter Property="Background" Value="#F5B989"/>
+        </Style>
+        <!-- Batch Scheduler: teal -->
+        <Style x:Key="SchedulerGroupBox" TargetType="Border" BasedOn="{StaticResource SectionBorder}">
+            <Setter Property="Background" Value="#8ED4D0"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="Margin" Value="4,0,0,0"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Width" Value="90"/>
+        </Style>
+        <!-- Shared look for the "5 rows visible, scrollable" search/result lists -->
+        <Style x:Key="FiveRowList" TargetType="ListBox">
+            <Setter Property="Height" Value="120"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="360"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ============ LEFT COLUMN ============ -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <TextBlock x:Name="CreditsRemainingText" FontWeight="Bold" Foreground="Red" FontSize="14"
+                           HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                <Grid Margin="0,0,0,2">
+                    <TextBlock Text="DialScript" FontSize="20" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Button Content="Refresh" HorizontalAlignment="Right"
+                            Click="Refresh_Click" ToolTip="Reset the page back to how it looked at launch"/>
+                </Grid>
+                <TextBlock Text="an IVR testing tool for Amazon Connect and beyond"
+                           FontSize="11" Foreground="Gray" HorizontalAlignment="Center" Margin="0,0,0,12"/>
+
+                <!-- Environment -->
+                <TextBlock Text="Environment" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
+                <Border Style="{StaticResource EnvironmentGroupBox}">
+                    <StackPanel Orientation="Horizontal">
+                        <ComboBox x:Name="EnvironmentComboBox" Width="180"
+                                  SelectionChanged="EnvironmentComboBox_SelectionChanged"/>
+                        <Button Content="+ Add Environment" Margin="8,0,0,0" Click="AddEnvironment_Click"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Phone Book -->
+                <TextBlock Text="Phone Book" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
+                <Border Style="{StaticResource PhoneBookGroupBox}">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Phone Number" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox x:Name="NewPhoneNumberBox" Width="130"
+                                     PreviewTextInput="DigitsOnly_PreviewTextInput"
+                                     TextChanged="NewPhoneNumberBox_TextChanged"/>
+                        </StackPanel>
+
+                        <Grid Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Description" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox Grid.Column="1" x:Name="NewPhoneDescriptionBox"
+                                     TextChanged="NewPhoneDescriptionBox_TextChanged"/>
+                            <Button Grid.Column="2" Content="+ Add Phone Number" Click="AddPhoneNumber_Click"/>
+                        </Grid>
+                        <TextBlock x:Name="PhoneBookErrorText" Foreground="Red" FontSize="11" TextWrapping="Wrap"
+                                   Margin="0,4,0,0" Visibility="Collapsed"/>
+
+                        <ListBox x:Name="PhoneBookList" Style="{StaticResource FiveRowList}" Margin="0,8,0,0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Width="300">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="30"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding FormattedNumber}" FontFamily="Consolas"/>
+                                            <TextBlock Text="{Binding Description}" FontSize="11" Foreground="Gray"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="-" Tag="{Binding Number}"
+                                                Click="RemovePhoneNumber_Click" Padding="6,0" ToolTip="Remove"
+                                                VerticalAlignment="Top"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock x:Name="PhoneBookLocationText" TextWrapping="Wrap" Foreground="Gray" FontSize="11" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Script Selector -->
+                <TextBlock Text="Script Selector" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
+                <Border Style="{StaticResource ScriptSelectorGroupBox}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="+ New Script" Click="NewScript_Click"/>
+                            <Button Grid.Column="1" Content="Import Script..." Margin="8,0,0,0" Click="ImportScript_Click"
+                                    ToolTip="Bring in a script file someone shared with you"/>
+                            <CheckBox Grid.Column="2" x:Name="PlayRecordingCheckBox" Content="Play recording when finished"
+                                      IsChecked="True" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                                      ToolTip="When a script run with Dial finishes, open its recording for playback. Applies to every script. (Batches never auto-play - they open the recordings folder at the end instead.)"/>
+                        </Grid>
+                        <TextBlock Text="Search scripts..." FontSize="11" Foreground="Gray" Margin="0,0,0,2"/>
+                        <TextBox x:Name="ScriptSearchBox" TextChanged="ScriptSearchBox_TextChanged"/>
+                        <ListBox x:Name="ScriptResultsList" Style="{StaticResource FiveRowList}" Margin="0,6,0,0"
+                                 DisplayMemberPath="Name" SelectionChanged="ScriptResultsList_SelectionChanged"
+                                 MouseDoubleClick="ScriptResultsList_MouseDoubleClick"/>
+                        <Grid Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="Load Selected Script" HorizontalAlignment="Left"
+                                    Click="LoadSelectedScript_Click"/>
+                            <Button Grid.Column="1" x:Name="DeleteScriptButton" Content="Delete Script" HorizontalAlignment="Right"
+                                    Visibility="Collapsed" Click="DeleteScript_Click"/>
+                        </Grid>
+                        <TextBlock x:Name="ScriptRegistryLocationText" TextWrapping="Wrap" Foreground="Gray" FontSize="11" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Target phone number -->
+                <TextBlock x:Name="CallTargetSectionTitle" Text="Call Target" FontWeight="Bold" FontSize="14"
+                           Margin="0,0,0,4" Visibility="Collapsed"/>
+                <Border x:Name="CallTargetGroupBox" Visibility="Collapsed" Style="{StaticResource NewScriptGroupBox}">
+                    <StackPanel>
+                        <TextBlock Text="Call Target" FontWeight="Bold" Margin="0,0,0,6"/>
+                        <TextBlock Text="Phone number to dial, or search by description (10-digit number required to actually dial)"/>
+                        <Grid>
+                            <TextBox x:Name="PhoneNumberBox"
+                                     PreviewTextInput="AlphaNumericOnly_PreviewTextInput"
+                                     TextChanged="PhoneNumberBox_TextChanged"
+                                     PreviewKeyDown="PhoneNumberBox_PreviewKeyDown"/>
+                            <Popup x:Name="PhoneSuggestionsPopup" PlacementTarget="{Binding ElementName=PhoneNumberBox}"
+                                   Placement="Bottom" StaysOpen="True" Width="260">
+                                <Border Background="White" BorderBrush="#AAA" BorderThickness="1">
+                                    <ListBox x:Name="PhoneSuggestionsList" MaxHeight="120"
+                                             DisplayMemberPath="DisplayText"
+                                             SelectionChanged="PhoneSuggestionsList_SelectionChanged"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <TextBlock x:Name="PhoneNumberDescriptionText" FontSize="11" Foreground="Gray"
+                                   Margin="0,3,0,0" Visibility="Collapsed"/>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <CheckBox Grid.Column="0" x:Name="TranscribeRecordingsCheckBox" Content="Transcribe Recording"
+                                      IsChecked="True" VerticalAlignment="Center"
+                                      ToolTip="After each call, converts what was said on the recording to text and writes it to the status log and log file (plus a .txt next to the .mp3). Adds roughly 10-30 seconds per call. Runs offline on this PC; the first use downloads a speech model (~140 MB)."/>
+                            <Button Grid.Column="1" x:Name="TranscribeSavedRecordingButton" Content="Transcribe a Saved Recording..."
+                                    Click="TranscribeSavedRecording_Click"
+                                    ToolTip="Pick a recording that's already been downloaded and transcribe it now - handy when Transcribe Recording was off for that call."/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Step builder -->
+                <TextBlock x:Name="StepBuilderSectionTitle" Text="Step Builder" FontWeight="Bold" FontSize="14"
+                           Margin="0,0,0,4" Visibility="Collapsed"/>
+                <Border x:Name="StepBuilderGroupBox" Visibility="Collapsed" Style="{StaticResource NewScriptGroupBox}">
+                    <StackPanel>
+                        <Grid Margin="30,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="55"/>
+                                <ColumnDefinition Width="34"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Type" FontSize="11" Foreground="Gray"/>
+                            <TextBlock Grid.Column="1" Text="Value" FontSize="11" Foreground="Gray" Margin="8,0"/>
+                            <TextBlock Grid.Column="2" Text="Pause Before" FontSize="11" Foreground="Gray" TextWrapping="Wrap"
+                                       ToolTip="Seconds to wait before this step runs. Tune per step based on how long the real IVR's prompt actually takes - the system can't auto-detect when the far end stops talking."/>
+                        </Grid>
+                        <ItemsControl x:Name="StepsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#DDD" BorderThickness="0,0,0,1" Padding="0,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="30"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="55"/>
+                                                <ColumnDefinition Width="34"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="{Binding Number}"
+                                                       VerticalAlignment="Center" FontWeight="Bold"/>
+
+                                            <ComboBox Grid.Column="1"
+                                                      SelectedValue="{Binding Type, Mode=TwoWay}"
+                                                      SelectedValuePath="Tag"
+                                                      VerticalAlignment="Center">
+                                                <ComboBoxItem Content="Numeric" Tag="Numeric"/>
+                                                <ComboBoxItem Content="Voice" Tag="Voice"/>
+                                                <ComboBoxItem Content="Hang Up" Tag="HangUp"/>
+                                            </ComboBox>
+
+                                            <TextBox Grid.Column="2" Margin="8,0"
+                                                     Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     Tag="{Binding}"
+                                                     IsEnabled="{Binding IsValueEditable}"
+                                                     PreviewTextInput="StepValue_PreviewTextInput"
+                                                     VerticalAlignment="Center"/>
+
+                                            <TextBox Grid.Column="3" Margin="0,0,4,0"
+                                                     Text="{Binding PauseSecondsBefore, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     PreviewTextInput="DigitsOnly_PreviewTextInput"
+                                                     VerticalAlignment="Center"
+                                                     ToolTip="Seconds to wait before this step runs"/>
+
+                                            <Button Grid.Column="4" Content="-" Tag="{Binding}"
+                                                    Click="RemoveStep_Click" VerticalAlignment="Center"
+                                                    ToolTip="Remove this step"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="+ Add Step" HorizontalAlignment="Left"
+                                    Click="AddStep_Click"/>
+                            <TextBlock Grid.Column="1" x:Name="SaveScriptErrorText" Foreground="Red" FontSize="11"
+                                       TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                       Margin="8,0" Visibility="Collapsed"/>
+                            <Button Grid.Column="2" x:Name="SaveScriptButton" Content="Save Script" HorizontalAlignment="Right"
+                                    Click="SaveScript_Click"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Script Location: read-only, just shows where this script's own file lives -->
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Script Location:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="1" x:Name="ScriptLocationDisplay" Text="(not saved yet)"
+                               Foreground="Gray" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                </Grid>
+
+                <!-- Per-script Log/Recording Location - overrides the default/batch settings
+                     below, only for this script when run via Dial. Saved as part of the
+                     script itself, so it's remembered whenever this script is reloaded. -->
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Log Location:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="1" x:Name="ScriptLogLocationDisplay" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Text="Using default"
+                               Foreground="Gray" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <Button Grid.Column="2" x:Name="ChooseScriptLogButton" Content="Choose..." Click="ChooseScriptLogLocation_Click"/>
+                    <Button Grid.Column="3" x:Name="StopScriptLogButton" Content="Stop" Click="StopScriptLogging_Click"
+                            ToolTip="Don't write this script's Dial runs to a log file"/>
+                    <Button Grid.Column="4" x:Name="ResetScriptLogButton" Content="Use Default" Click="ResetScriptLogLocation_Click" Visibility="Collapsed"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Recording Location:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBlock Grid.Column="1" x:Name="ScriptRecordingLocationDisplay" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Text="Using default"
+                               Foreground="Gray" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <Button Grid.Column="2" x:Name="ChooseScriptRecordingButton" Content="Choose..." Click="ChooseScriptRecordingLocation_Click"/>
+                    <Button Grid.Column="3" x:Name="ResetScriptRecordingButton" Content="Use Default" Click="ResetScriptRecordingLocation_Click" Visibility="Collapsed"/>
+                </Grid>
+
+                <!-- Dial -->
+                <Button x:Name="DialButton" Content="Dial" FontSize="16" FontWeight="Bold" Padding="10"
+                        Background="#2E7D32" Foreground="White"
+                        Visibility="Collapsed"
+                        Click="Dial_Click"/>
+
+                <!-- Status -->
+                <GroupBox Header="Status">
+                    <StackPanel>
+                        <TextBox x:Name="StatusBox" IsReadOnly="True" TextWrapping="Wrap"
+                                 BorderThickness="0" Background="Transparent"
+                                 MinHeight="60" VerticalScrollBarVisibility="Auto"/>
+                        <Button Content="Clear Status" HorizontalAlignment="Right" Padding="8,2"
+                                Margin="0,6,0,0" Click="ClearStatus_Click"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Help link, deliberately styled unlike the action buttons so it reads as
+                     "how do I...?" help rather than something that does work. -->
+                <TextBlock HorizontalAlignment="Center" Margin="0,16,0,0" FontSize="12">
+                    <Run Text="&#x24D8; " Foreground="#0066CC" FontFamily="Segoe UI Symbol"/>
+                    <Hyperlink Click="ShareScripts_Click" Foreground="#0066CC"
+                               ToolTip="Opens help: how to send a script to someone, or import one they sent you">
+                        <Run Text="How to share scripts with others"/>
+                    </Hyperlink>
+                </TextBlock>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ============ RIGHT COLUMN: BATCH ============ -->
+        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+
+                <TextBlock Text="Batch" FontSize="20" FontWeight="Bold" Margin="0,0,0,12"/>
+
+                <TextBlock Text="Create Batch" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
+                <Border Style="{StaticResource CreateBatchGroupBox}">
+                    <StackPanel>
+                        <Button Content="Create Batch" HorizontalAlignment="Left"
+                                Click="CreateBatch_Click"/>
+
+                        <StackPanel x:Name="CreateBatchPanel" Visibility="Collapsed" Margin="0,10,0,0">
+                            <TextBlock Text="Select the scripts to include, then Save Batch below." TextWrapping="Wrap" Margin="0,0,0,6"/>
+                            <TextBlock Text="Search scripts..." FontSize="11" Foreground="Gray" Margin="0,0,0,2"/>
+                            <TextBox x:Name="BatchScriptFilterBox" TextChanged="BatchScriptFilterBox_TextChanged"/>
+                            <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto" Margin="0,6,0,0">
+                                <ItemsControl x:Name="BatchScriptChecklist">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                      Margin="0,4"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Cancel" HorizontalAlignment="Left"
+                                        Click="CancelCreateBatch_Click"
+                                        ToolTip="Discard this batch and close the Create Batch panel"/>
+                                <TextBlock Grid.Column="1" x:Name="SaveBatchErrorText" Foreground="Red" FontSize="11"
+                                           TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Right"
+                                           Margin="8,0,8,0" Visibility="Collapsed"/>
+                                <Button Grid.Column="2" Content="Save Batch" HorizontalAlignment="Right"
+                                        Click="SaveBatch_Click"/>
+                            </Grid>
+                            <TextBlock x:Name="BatchScriptSourceText" TextWrapping="Wrap" Foreground="Gray" FontSize="11" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="Run Batch" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
+                <Border Style="{StaticResource RunBatchGroupBox}">
+                    <StackPanel>
+                        <TextBlock Text="Search batches..." FontSize="11" Foreground="Gray" Margin="0,0,0,2"/>
+                        <TextBox x:Name="BatchSearchBox" TextChanged="BatchSearchBox_TextChanged"/>
+                        <ListBox x:Name="BatchResultsList" Style="{StaticResource FiveRowList}" Margin="0,6,0,0"
+                                 DisplayMemberPath="Name" SelectionChanged="BatchResultsList_SelectionChanged"/>
+
+                        <TextBlock Text="Scripts in selected batch (run in this order):" Margin="0,10,0,4" FontSize="11" Foreground="Gray"/>
+                        <ListBox x:Name="BatchScriptsPreviewList" Height="100" VerticalAlignment="Top"/>
+
+                        <Grid Margin="0,10,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Batch Location:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1" x:Name="BatchLocationDisplay" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Text="(no batch selected)"
+                                       Foreground="Gray" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            <Button Grid.Column="2" x:Name="ChangeBatchLocationButton" Content="Change..." IsEnabled="False"
+                                    Click="ChangeBatchLocation_Click"
+                                    ToolTip="Move the selected batch's file to a different folder (local or network drive)"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Log Location:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1" x:Name="LogLocationDisplay" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Text="No logging turned on"
+                                       Foreground="Gray" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            <Button Grid.Column="2" x:Name="ChooseLogButton" Content="Choose..." Click="ChooseLogLocation_Click"/>
+                            <Button Grid.Column="3" x:Name="StopLogButton" Content="Stop" Click="StopLogging_Click" Visibility="Collapsed"/>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Recording Location:" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1" x:Name="RecordingLocationDisplay" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
+                                       Foreground="Gray" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                            <Button Grid.Column="2" x:Name="ChooseRecordingButton" Content="Change..." Click="ChooseRecordingLocation_Click"/>
+                        </Grid>
+
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" x:Name="RunBatchButton" Content="Run Batch" FontWeight="Bold"
+                                    HorizontalAlignment="Left" Click="RunBatch_Click"/>
+                            <Button Grid.Column="1" x:Name="CancelBatchButton" Content="Cancel Batch"
+                                    Visibility="Collapsed" Click="CancelBatch_Click"
+                                    ToolTip="Stops the batch after the script currently running finishes - an in-progress call can't be interrupted"/>
+                            <Button Grid.Column="2" x:Name="DeleteBatchButton" Content="Delete Batch"
+                                    Visibility="Collapsed" Click="DeleteBatch_Click"/>
+                        </Grid>
+                        <TextBlock x:Name="RunBatchErrorText" Foreground="Red" FontSize="11" TextWrapping="Wrap"
+                                   Margin="0,6,0,0" Visibility="Collapsed"/>
+                        <TextBlock x:Name="BatchRegistryLocationText" TextWrapping="Wrap" Foreground="Gray" FontSize="11" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <GroupBox Header="Batch Status" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBox x:Name="BatchStatusBox" IsReadOnly="True" TextWrapping="Wrap"
+                                 BorderThickness="0" Background="Transparent"
+                                 MinHeight="200" VerticalScrollBarVisibility="Auto"/>
+                        <Button Content="Clear Status" HorizontalAlignment="Right" Padding="8,2"
+                                Margin="0,6,0,0" Click="ClearBatchStatus_Click"/>
+                    </StackPanel>
+                </GroupBox>
+
+                <!-- Batch Scheduler -->
+                <TextBlock Text="Batch Scheduler" FontWeight="Bold" FontSize="14" Margin="0,0,0,4"/>
+                <Border Style="{StaticResource SchedulerGroupBox}">
+                    <StackPanel>
+                        <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="#333333" Margin="0,0,0,8">
+                            Runs batches automatically while this app is open. Nothing fires if the
+                            app is closed at the scheduled time - this isn't a background service.
+                        </TextBlock>
+
+                        <Button Content="+ Add Schedule" HorizontalAlignment="Left" Margin="0,0,0,8"
+                                Click="AddSchedule_Click"/>
+
+                        <ItemsControl x:Name="ScheduleList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="White" BorderBrush="#AAA" BorderThickness="1"
+                                            CornerRadius="2" Margin="0,0,0,6" Padding="8">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="Bold"/>
+                                                <Button Grid.Column="1" Content="{Binding EnableButtonLabel}"
+                                                        Padding="8,2" Margin="4,0" Click="ToggleScheduleEnabled_Click"
+                                                        Tag="{Binding}"/>
+                                                <Button Grid.Column="2" Content="Delete" Padding="8,2"
+                                                        Click="DeleteSchedule_Click" Tag="{Binding}"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding ScheduleDescription}" FontSize="11" Foreground="Gray" Margin="0,2,0,0"/>
+                                            <TextBlock Text="{Binding NextRunText}" FontSize="11" Foreground="#333"/>
+                                            <TextBlock Text="{Binding BatchesSummary}" FontSize="11" Foreground="Gray" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding LogFilePath, StringFormat='Log: {0}'}" FontSize="10" Foreground="Gray" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock x:Name="NoSchedulesText" Text="No schedules yet for this environment."
+                                   FontSize="11" Foreground="Gray" Visibility="Collapsed"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</Window>

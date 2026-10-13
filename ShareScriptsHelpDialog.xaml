@@ -1,0 +1,77 @@
+<Window x:Class="ConnectIVRTester.ShareScriptsHelpDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sharing Scripts &amp; Batches"
+        Width="560" Height="520"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Sharing Scripts &amp; Batches" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Scripts and batches are just .json files - sharing one is as simple as sending the file." TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                <TextBlock Text="To share a script or batch with someone" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                    1. Select it in Script Selector (or Run Batch) and note where it's saved -
+                    the location is shown under the list, or click the item to see its path.
+                </TextBlock>
+                <TextBlock Text="2. Copy that .json file and send it however you'd normally share a file (email, chat, USB drive, network folder)." TextWrapping="Wrap" Margin="0,0,0,4"/>
+                <TextBlock Text="3. The recipient saves it anywhere on their own machine." TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                <TextBlock Text="To bring a received script into your own app" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,12">
+                    Use the <Run FontWeight="Bold" Text="Import Script..."/> button next to
+                    "+ New Script" in Script Selector. Browse to the .json file you were sent -
+                    it'll register under your currently selected Environment and show up in
+                    your Script Selector immediately. No manual file editing required.
+                </TextBlock>
+
+                <TextBlock Text="Batches" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,12">
+                    A batch file references its scripts by file path, so if you share a batch,
+                    share its referenced scripts too (or make sure the recipient already has
+                    scripts with matching names/paths). Batches don't currently have their own
+                    Import button - for now, the simplest approach for a shared batch is for
+                    each teammate to recreate it locally via Create Batch once they've imported
+                    the underlying scripts.
+                </TextBlock>
+
+                <TextBlock Text="For a whole team sharing the same scripts" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                    If several people want to stay in sync automatically rather than re-sending
+                    files by hand, point Save Script's "Browse..." location at a shared network
+                    folder everyone can reach (e.g. \\server\share\DialScript Scripts\) instead
+                    of a local folder. Anyone who saves there is editing the same underlying
+                    files - and everyone else can use Import Script to pull the latest version
+                    in whenever they need it.
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Margin="0,0,0,4">
+                    A few things worth knowing with this approach:
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Margin="12,0,0,4">
+                    • Each person's own Script Selector list is still local - saving to a shared
+                    folder doesn't automatically add it to everyone else's list, they still need
+                    to Import it once.
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Margin="12,0,0,4">
+                    • If two people edit and save the same script at the same time, the last
+                    save wins - there's no merge/conflict warning.
+                </TextBlock>
+                <TextBlock TextWrapping="Wrap" Margin="12,0,0,12">
+                    • Everyone needs the shared drive/folder mapped and reachable for their
+                    scripts to load - if it's offline, those scripts just won't be available
+                    until it's back.
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Button Grid.Row="1" Content="Close" Padding="14,4" HorizontalAlignment="Right"
+                Margin="0,12,0,0" Click="Close_Click"/>
+    </Grid>
+</Window>

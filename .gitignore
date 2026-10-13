@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+
+# Real Twilio credentials - NEVER commit this. config.example.json (tracked)
+# is the template; config.json is your own local, filled-in copy.
+config.json
+
+# Publish output
+publish/
+
+# User-specific files
+*.user
+.vs/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Built installer (Inno Setup)
+Output/
+*.exe
+*.pem

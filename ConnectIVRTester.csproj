@@ -1,0 +1,89 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DialScript</AssemblyName>
+    <RootNamespace>ConnectIVRTester</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>icon\app.ico</ApplicationIcon>
+
+    <!-- Self-contained single-file publish settings (used via the dotnet publish command in README.md) -->
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <!--
+    Offline speech-to-text for recordings (see RecordingTranscriber.cs):
+      - NAudio decodes the downloaded .mp3 and splits the two call legs apart.
+      - Whisper.net runs OpenAI's Whisper model locally on the CPU; Whisper.net.Runtime
+        supplies the native whisper.cpp library it calls into.
+  -->
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Whisper.net" Version="1.9.0" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.0" />
+  </ItemGroup>
+
+  <!--
+    Keep Whisper's native libraries OUT of the single-file bundle.
+
+    Whisper.net only looks for its native DLLs in a runtimes\win-x64\ folder next to
+    the exe. When they're bundled into DialScript.exe, .NET extracts them to a hidden
+    temp folder instead, Whisper.net can't find them, and transcription fails with
+    "Native Library not found in default paths". Marking them ExcludeFromSingleFile
+    makes publish write them as loose files to runtimes\win-x64\ beside the exe,
+    exactly where Whisper.net looks. That folder must ship in the zip with the exe.
+
+    All four files end in "whisper": whisper, ggml-whisper, ggml-base-whisper and
+    ggml-cpu-whisper. The 32-bit (win-x86) copies are dropped, since this is a
+    64-bit-only build and they'd never be used.
+  -->
+  <Target Name="KeepWhisperNativesBesideExe" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="$([System.String]::new('%(ResolvedFileToPublish.Filename)').EndsWith('whisper')) And $([System.String]::new('%(ResolvedFileToPublish.RelativePath)').Contains('win-x86'))" />
+      <ResolvedFileToPublish Condition="$([System.String]::new('%(ResolvedFileToPublish.Filename)').EndsWith('whisper'))">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Bundled sample scripts (self-contained JSON, no machine-specific paths inside them)
+    used by SampleDataSeeder to pre-populate a first run with something to test right
+    away. Copied to SampleData\ next to the exe on both build and publish.
+  -->
+  <ItemGroup>
+    <None Include="SampleData\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- App icon: used both as the exe's icon (ApplicationIcon above) and, via
+       Window.Icon in MainWindow.xaml, as the window's title-bar/taskbar icon
+       while the app is running. -->
+  <ItemGroup>
+    <Resource Include="icon\app.ico"/>
+  </ItemGroup>
+
+  <!--
+    Docs for whoever downloads this - copied alongside the exe on every build/publish
+    so they're never accidentally left out of a distribution zip.
+  -->
+  <ItemGroup>
+    <None Include="README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="TESTING.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

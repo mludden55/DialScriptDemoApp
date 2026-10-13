@@ -1,0 +1,42 @@
+{
+  "PhoneNumber": "6317918378",
+  "HoldSecondsAfterLastStep": 10,
+  "Steps": [
+    {
+      "Type": "Voice",
+      "Value": "This is a test message",
+      "PauseSecondsBefore": 9
+    },
+    {
+      "Type": "Numeric",
+      "Value": "#",
+      "PauseSecondsBefore": 1
+    },
+    {
+      "Type": "Numeric",
+      "Value": "1",
+      "PauseSecondsBefore": 10
+    },
+    {
+      "Type": "Numeric",
+      "Value": "1",
+      "PauseSecondsBefore": 3
+    },
+    {
+      "Type": "Voice",
+      "Value": "The sky is blue today",
+      "PauseSecondsBefore": 10
+    },
+    {
+      "Type": "Numeric",
+      "Value": "#",
+      "PauseSecondsBefore": 1
+    },
+    {
+      "Type": "HangUp",
+      "Value": "",
+      "PauseSecondsBefore": 10
+    }
+  ],
+  "SavedAt": "2026-09-24T14:53:57.7191522-06:00"
+}
